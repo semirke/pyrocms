@@ -79,10 +79,7 @@ class MY_Form_validation extends CI_Form_validation
 	 */
 	public function set_model($model)
 	{
-		if ($model)
-		{
-			$this->_model = strtolower($model);
-		}
+		$this->_model = is_object($model) ? $model : strtolower($model);
 	}
 
 	// --------------------------------------------------------------------
@@ -256,7 +253,20 @@ class MY_Form_validation extends CI_Form_validation
 					$result = call_user_func(array(new CI::$APP->controller, $rule), $postdata, $param);
 				}
 				// it wasn't in the controller. Did MY_Model specify a valid model in use?
-				elseif ($this->_model)
+				elseif (is_object($this->_model))
+				{
+					// moment of truth. Does the callback itself exist?
+					if (method_exists($this->_model, $rule))
+					{
+						$result = call_user_func(array($this->_model, $rule), $postdata, $param);
+					}
+					else
+					{
+						throw new Exception('Undefined callback '.$rule.' Not found in '.$this->_model);
+					}
+				}
+				// it wasn't in the controller. Did MY_Model specify a valid model in use?
+				elseif (is_string($this->_model))
 				{
 					// moment of truth. Does the callback itself exist?
 					if (method_exists(CI::$APP->{$this->_model}, $rule))

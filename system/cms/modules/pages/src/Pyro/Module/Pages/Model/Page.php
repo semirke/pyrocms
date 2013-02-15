@@ -10,6 +10,13 @@
 class Page extends \Illuminate\Database\Eloquent\Model
 {
     /**
+     * Initialized
+     *
+     * @var string
+     */
+    protected static $initialized = false;
+
+    /**
      * Define the table name
      *
      * @var string
@@ -103,6 +110,28 @@ class Page extends \Illuminate\Database\Eloquent\Model
 
 	// For streams
 	public static $compiled_validate = array();
+
+	public function __construct()
+	{
+		if ( ! static::$initialized === false) {
+
+			static::creating(function($model) {
+				ci()->load->library('form_validation');
+
+				ci()->form_validation->set_data($model->toArray());
+
+				return ci()->form_validation->set_rules(static::$validate);
+			});
+
+			static::updating(function($model) {
+				ci()->load->library('form_validation');
+
+				ci()->form_validation->set_data($model->toArray());
+				ci()->form_validation->set_model($model);
+				return ci()->form_validation->set_rules(static::$validate);
+			});
+		}
+	}
 
 	/**
 	 * Relationship: Type
