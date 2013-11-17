@@ -30,11 +30,15 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
         $form = $crawler->selectButton('Step 2')->form();
         $crawler = $this->client->submit($form, array(
+			'hostname' => PYRO_DB_HOST,
             'username'=>'test',
             'password'=>'test',
-            'database'=>'pyrocms'
+            'database'=>'pyrocms',
+			'create_db => 1,
+			'port' => '3306',
+			'db_driver' => 'mysql'
         ));
-        $this->assertContains('The port field is required',$crawler->filter('.error')->text());
+        $this->assertContains('Problem connecting to the database',$crawler->filter('.error')->text());
     }
 
     /**
@@ -49,8 +53,12 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
         $form = $crawler->selectButton('Step 2')->form();
         $crawler = $this->client->submit($form,array(
-            'username'=>'pyrocms',
-            'password'=>'password'
+			'hostname' => PYRO_DB_HOST,
+            'username'=>'test',
+            'password'=>'test',
+			'create_db => 1,
+			'port' => '3306',
+			'db_driver' => 'mysql'
         ));
         $this->assertContains('The port field is required',$crawler->filter('.error')->text());
      }
