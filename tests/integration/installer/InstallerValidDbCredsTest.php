@@ -27,17 +27,18 @@ class TestInstallerValidDbCreds extends PHPUnit_Framework_TestCase
     public function DatabaseAuthenticationWithValidCreds()
     {
         $formFields = array(
-            'hostname'=>PYRO_DB_HOST,
-            'username'=>'pyrocms',
-            'password'=>'password',
-            'create_db'=>'true',
-            'database'=>'pyrocms'
+            'db_driver' => 'mysql',
+            'hostname' => PYRO_DB_HOST,
+            'username' => 'pyrocms',
+            'password' => 'password',
+            'create_db' => 1,
+            'database' => 'pyrocms',
+            'port' => '3306'
+
         );
         $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
-        $link = $crawler->selectLink('Step #1')->link();
-        $crawler = $this->client->click($link);
-        $form = $crawler->selectButton('Step #2')->form();
+        $form = $crawler->selectButton('Step 2')->form();
         $crawler = $this->client->submit($form,$formFields);
         $this->assertContains('Step 4:',$crawler->filter('.title h3')->text());
     }

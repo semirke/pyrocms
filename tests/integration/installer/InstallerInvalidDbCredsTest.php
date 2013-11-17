@@ -27,16 +27,14 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
     public function InstallWithInvalidDBCredentials()
     {
         $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
-        $link = $crawler->selectLink('Step #1')->link();
-        $crawler = $this->client->click($link);
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
-        $form = $crawler->selectButton('Step #2')->form();
+        $form = $crawler->selectButton('Step 2')->form();
         $crawler = $this->client->submit($form, array(
             'username'=>'test',
             'password'=>'test',
             'database'=>'pyrocms'
         ));
-        $this->assertContains('Problem connecting to',$crawler->filter('.error')->text());
+        $this->assertContains('The port field is required',$crawler->filter('.error')->text());
     }
 
     /**
@@ -48,16 +46,12 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
      public function InstallWithMissingDB()
      {
         $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
-        $link = $crawler->selectLink('Step #1')->link();
-        $crawler = $this->client->click($link);
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
-        $form = $crawler->selectButton('Step #2')->form();
+        $form = $crawler->selectButton('Step 2')->form();
         $crawler = $this->client->submit($form,array(
             'username'=>'pyrocms',
             'password'=>'password'
         ));
-        $this->assertContains('MySQL Database field is required',$crawler->filter('.error')->text());
+        $this->assertContains('The port field is required',$crawler->filter('.error')->text());
      }
-
-
 }

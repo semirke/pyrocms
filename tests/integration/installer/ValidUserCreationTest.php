@@ -17,17 +17,16 @@ class CreateValidUserTest extends PHPUnit_Framework_TestCase
 
     public function navigateToStepFour()
     {
-        $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
-
-        $link = $crawler->selectLink('Step #1')->link();
-        $crawler = $this->client->click($link);
-        $form = $crawler->selectButton('Step #2')->form();
+        $crawler = $this->client->request('GET', 'http://' . PYRO_HOST);
+        $form = $crawler->selectButton('Step 2')->form();
         $formFields = array(
-            'username'=>'pyrocms',
-            'password'=>'password',
-            'database'=>'pyrocms',
-            'create_db'=>'true',
-            'hostname' => PYRO_DB_HOST
+            'username' => 'pyrocms',
+            'password' => 'password',
+            'database' => 'pyrocms',
+            'create_db'=> 1 ,
+            'hostname' => PYRO_DB_HOST,
+            'db_driver' => 'mysql',
+            'port' => '3306'
         );
         $crawler = $this->client->submit($form,$formFields);
 
@@ -44,11 +43,11 @@ class CreateValidUserTest extends PHPUnit_Framework_TestCase
         $crawler = $this->navigateToStepFour();
         $form = $crawler->selectButton('Install')->form();
         $formFields = array(
-            'user_name'=>'admin',
-            'user_firstname'=> 'Pyro',
-            'user_lastname' => 'Admin',
-            'user_email' => 'admin@admin.com',
-            'user_password' => 'administrator'
+            'user[username]'=>'admin',
+            'user[firstname]'=> 'Pyro',
+            'user[lastname]' => 'Admin',
+            'user[email]' => 'admin@admin.com',
+            'user[password]' => 'administrator'
         );
         //submit user forms
         $crawler = $this->client->submit($form,$formFields);
