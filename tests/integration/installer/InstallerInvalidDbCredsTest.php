@@ -34,7 +34,7 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
             'username'=>'test',
             'password'=>'test',
             'database'=>'pyrocms',
-			'create_db => 1,
+			'create_db' => 1,
 			'port' => '3306',
 			'db_driver' => 'mysql'
         ));
