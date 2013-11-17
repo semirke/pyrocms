@@ -56,7 +56,7 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
 			'hostname' => PYRO_DB_HOST,
             'username'=>'test',
             'password'=>'test',
-			'create_db => 1,
+			'create_db' => 1,
 			'port' => '3306',
 			'db_driver' => 'mysql'
         ));
