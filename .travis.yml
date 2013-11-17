@@ -5,6 +5,7 @@ php:
   - "5.5"
 before_script:
   - "sudo chmod -R 777  ."
+  - "sudo composer self-update"
   - "sudo apt-get update --fix-missing"
   - "sudo apt-get install apache2"
   - "sudo a2enmod actions"
@@ -15,7 +16,7 @@ before_script:
   - "sudo service apache2 restart"
   - mysql -u root -e "CREATE USER 'pyrocms'@'127.0.0.1' IDENTIFIED BY 'password'"
   - mysql -u root -e "GRANT ALL PRIVILEGES ON *.* to 'pyrocms'@'127.0.0.1' IDENTIFIED BY 'password'"
-  - sudo more /etc/apache2/sites-available/default 
+
 script: phpunit -c tests/integration
 
 branches:
