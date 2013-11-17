@@ -38,7 +38,7 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
 			'port' => '3306',
 			'db_driver' => 'mysql'
         ));
-        $this->assertContains('Problem connecting to the database',$crawler->filter('.error')->text());
+        $this->assertContains('Problem connecting to the database', $crawler->filter('.error')->text());
     }
 
     /**
@@ -60,6 +60,6 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
 			'port' => '3306',
 			'db_driver' => 'mysql'
         ));
-        $this->assertContains('The port field is required',$crawler->filter('.error')->text());
+        $this->assertContains('Problem connecting to the database', $crawler->filter('.error')->text());
      }
 }
