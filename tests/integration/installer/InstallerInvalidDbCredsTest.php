@@ -26,7 +26,6 @@ class TestInstallerInvalidDbCreds extends PHPUnit_Framework_Testcase
      */
     public function InstallWithInvalidDBCredentials()
     {
-		var_dump(PYRO_HOST);
         $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
         $form = $crawler->selectButton('Step 2')->form();
