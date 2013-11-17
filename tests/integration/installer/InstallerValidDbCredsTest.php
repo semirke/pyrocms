@@ -34,7 +34,6 @@ class TestInstallerValidDbCreds extends PHPUnit_Framework_TestCase
             'create_db' => 1,
             'database' => 'pyrocms',
             'port' => '3306'
-
         );
         $crawler = $this->client->request('GET', 'http://'.PYRO_HOST);
         $this->assertEquals($crawler->filter('title')->text(),'PyroCMS Installer');
