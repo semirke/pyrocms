@@ -56,7 +56,7 @@ class StreamModel extends Eloquent
         }
 
         // Do we have a field name?
-        if ( ! isset($stream_name) or ! trim($stream_name)) {
+        if (! isset($stream_name) or ! trim($stream_name)) {
             throw new Exception\EmptyFieldNameException;
         }
 
@@ -92,7 +92,7 @@ class StreamModel extends Eloquent
      */
     public static function getStream($stream_slug, $stream_namespace = null)
     {
-        if ( ! $stream = static::findBySlugAndNamespace($stream_slug, $stream_namespace, true)) {
+        if (! $stream = static::findBySlugAndNamespace($stream_slug, $stream_namespace, true)) {
             throw new Exception\InvalidStreamModelException('Invalid stream. Attempted ['.$stream_slug.','.$stream_namespace.']');
         }
 
@@ -230,8 +230,8 @@ class StreamModel extends Eloquent
      */
     public function validationArray($stream, $stream_namespace = null, $method = 'new', $skips = array(), $row_id = null)
     {
-        if ( ! $stream instanceof static) {
-            if ( ! $stream = static::findBySlugAndNamespace($stream, $namespace)) {
+        if (! $stream instanceof static) {
+            if (! $stream = static::findBySlugAndNamespace($stream, $namespace)) {
                 throw new Exception\InvalidStreamModelException('Invalid stream. Attempted ['.$stream_slug.','.$namespace.']');
             }
         }
@@ -276,11 +276,13 @@ class StreamModel extends Eloquent
      */
     public static function findBySlugAndNamespace($stream_slug, $stream_namespace = null, $fresh = false)
     {
-        if ( ! $stream_namespace) {
+        if (! $stream_namespace) {
             @list($stream_slug, $stream_namespace) = explode('.', $stream_slug);
         }
 
-        if (isset(static::$streams_cache[$stream_slug.'.'.$stream_namespace])) return static::$streams_cache[$stream_slug.'.'.$stream_namespace];
+        if (isset(static::$streams_cache[$stream_slug.'.'.$stream_namespace])) {
+            return static::$streams_cache[$stream_slug.'.'.$stream_namespace];
+        }
 
         $stream = static::with('assignments.field')->where('stream_slug', $stream_slug)
             ->where('stream_namespace', $stream_namespace)
@@ -288,7 +290,14 @@ class StreamModel extends Eloquent
             ->fresh($fresh)
             ->first();
 
-        return static::$streams_cache[$stream->stream_slug.'.'.$stream->stream_namespace] = static::$streams_cache[$stream->id] = $stream;
+        if (! $stream) {
+            return false;
+        }
+
+        // Cache this result for later, by id and by compound name
+        static::$streams_cache[$stream->stream_slug.'.'.$stream->stream_namespace] = static::$streams_cache[$stream->id] = $stream;
+        
+        return $stream;
     }
 
     /**
@@ -300,7 +309,11 @@ class StreamModel extends Eloquent
      */
     public static function findBySlugAndNamespaceOrFail($stream_slug = null, $stream_namespace = null, $fresh = false)
     {
-        if ( ! is_null($model = static::findBySlugAndNamespace($stream_slug, $stream_namespace, $fresh))) return $model;
+        $model = static::findBySlugAndNamespace($stream_slug, $stream_namespace, $fresh);
+
+        if (! is_null($mode)) {
+            return $model;
+        }
 
         throw new Exception\StreamModelNotFoundException;
     }
@@ -366,7 +379,7 @@ class StreamModel extends Eloquent
     {
         if (empty($stream_ids) or $from == $to) return false;
 
-        if ( ! is_array($stream_ids)) {
+        if (! is_array($stream_ids)) {
             $stream_ids = array($stream_ids);
         }
 
@@ -385,7 +398,7 @@ class StreamModel extends Eloquent
     public static function create(array $attributes = array())
     {
         // Slug and namespace are required attributes
-        if ( ! isset($attributes['stream_slug']) and ! isset($attributes['stream_namespace'])) {
+        if (! isset($attributes['stream_slug']) and ! isset($attributes['stream_namespace'])) {
             return false;
         }
 
@@ -401,7 +414,7 @@ class StreamModel extends Eloquent
         $schema = ci()->pdb->getSchemaBuilder();
 
         // See if table exists. You never know if it sneaked past validation
-        if ( ! $schema->hasTable($attributes['stream_prefix'].$attributes['stream_slug'])) {
+        if (! $schema->hasTable($attributes['stream_prefix'].$attributes['stream_slug'])) {
             // Create the table for our new stream
             $schema->create($attributes['stream_prefix'].$attributes['stream_slug'], function($table) {
                 $table->increments('id');
@@ -434,7 +447,7 @@ class StreamModel extends Eloquent
         $to = $attributes['stream_prefix'].$attributes['stream_slug'];
 
         try {
-            if ( ! empty($to) and $schema->hasTable($from) and $from != $to) {
+            if (! empty($to) and $schema->hasTable($from) and $from != $to) {
                 $schema->rename($from, $to);
             }
         } catch (Exception $e) {
@@ -481,8 +494,6 @@ class StreamModel extends Eloquent
      */
     public function assignField($field = null, $data = array())
     {
-        // TODO This whole method needs to be recoded to use Schema...
-
         // -------------------------------------
         // Get the field data
         // -------------------------------------
@@ -491,9 +502,12 @@ class StreamModel extends Eloquent
             $field = FieldModel::findOrFail($field_id);
         }
 
-        if ( ! $field instanceof FieldModel) return false;
+        if (! $field instanceof FieldModel) {
+            return false;
+        }
 
-        if ( ! $assignment = FieldAssignmentModel::findByFieldIdAndStreamId($field->getKey(), $this->getKey(), true)) {
+        $assignment = FieldAssignmentModel::findByFieldIdAndStreamId($field->getKey(), $this->getKey(), true);
+        if (! $assignment) {
             $assignment = new FieldAssignmentModel;
         }
 
@@ -501,7 +515,9 @@ class StreamModel extends Eloquent
         // Load the field type
         // -------------------------------------
 
-        if ( ! $field_type = $field->getType()) return false;
+        if (! $field_type = $field->getType()) {
+            return false;
+        }
 
         // Do we have a pre-add function?
         if (method_exists($field_type, 'fieldAssignmentConstruct')) {
@@ -514,7 +530,7 @@ class StreamModel extends Eloquent
         // -------------------------------------
 
         if ($field_type->db_col_type !== false) {
-            $this->schema_thing($this, $field_type, $field);
+            $this->addFieldToStreamTable($field_type, $field);
         }
 
         // -------------------------------------
@@ -532,6 +548,11 @@ class StreamModel extends Eloquent
         // -------------------------------------
         // Create record in assignments
         // -------------------------------------
+
+        // TODO: Why would this happen? SQLite is unhappy about a NULL going in. Phil
+        if (is_null($assignment->field_name)) {
+            $assignment->field_name = '??';
+        }
 
         $assignment->stream_id 		= $this->getKey();
         $assignment->field_id		= $field->getKey();
@@ -570,35 +591,34 @@ class StreamModel extends Eloquent
     }
 
     /**
-     * Schema thing..
-     * @param  object $stream
+     * Add Field To Stream Table
+     *
      * @param  object $type
      * @param  object $field
      * @return void
      */
-    public function schema_thing($stream, $type, $field)
+    public function addFieldToStreamTable($type, $field)
     {
         $schema = ci()->pdb->getSchemaBuilder();
 
         $prefix = ci()->pdb->getQueryGrammar()->getTablePrefix();
 
+        $streamTable = $this->stream_prefix.$this->stream_slug;
+
         // Check if the table exists
-        if ( ! $schema->hasTable($stream->stream_prefix.$stream->stream_slug)) return false;
+        if (! $schema->hasTable($prefix.$streamTable)) return false;
 
         // Check if the column does not exist already to avoid errors, specially on migrations
-        // @todo - hasColunm() has a bug in illuminate/database where it does not apply the table prefix, we have to pass it ourselves
+        // TODO: hasColunm() has a bug in illuminate/database where it does not apply the table prefix, we have to pass it ourselves
         // Remove the prefix as soon as the pull request / fix gets merged https://github.com/laravel/framework/pull/2070
-        if ($schema->hasColumn($prefix.$stream->stream_prefix.$stream->stream_slug, $field->field_slug)) return false;
+        // Update: This has been merged, but is still broken without $prefix. Phil
+        if ($schema->hasColumn($prefix.$streamTable, $field->field_slug)) {
+            return false;
+        }
 
-        $schema->table($stream->stream_prefix.$stream->stream_slug, function($table) use ($type, $field) {
+        $schema->table($streamTable, function($table) use ($type, $field) {
 
             $db_type_method = camel_case($type->db_col_type);
-
-            // This seems like a sane default, and allows for 2.2 style widgets
-            // Bad boy.. whomever.
-            if (! method_exists($type, $db_type_method)) {
-                //$db_type_method = 'text';
-            }
 
             // -------------------------------------
             // Constraint
@@ -639,7 +659,7 @@ class StreamModel extends Eloquent
 
     public function addViewOption($field_slug = null)
     {
-        if ( ! $field_slug) return false;
+        if (! $field_slug) return false;
 
         $view_options = $this->view_options;
 
@@ -652,7 +672,7 @@ class StreamModel extends Eloquent
 
     public function removeViewOption($field_slug = null)
     {
-        if ( ! $field_slug) return false;
+        if (! $field_slug) return false;
 
         $view_options = $this->view_options;
 
@@ -682,7 +702,7 @@ class StreamModel extends Eloquent
         $schema = ci()->pdb->getSchemaBuilder();
         $prefix = ci()->pdb->getQueryGrammar()->getTablePrefix();
 
-        if ( ! $field instanceof FieldModel) return false;
+        if (! $field instanceof FieldModel) return false;
 
         // Do we have a destruct function
         if ($type = $field->getType()) {
@@ -697,7 +717,7 @@ class StreamModel extends Eloquent
             try {
                 // Alternate method fields will not have a column, so we just
                 // check for it first
-                if ( ! $type->alt_process) {
+                if (! $type->alt_process) {
                     $schema->table($this->stream_prefix.$this->stream_slug, function ($table) use ($field) {
                         $table->dropColumn($field->field_slug);
                     });
@@ -711,7 +731,7 @@ class StreamModel extends Eloquent
             // -------------------------------------
             // Remove from field assignments table
             // -------------------------------------
-            if ( ! $assignment->delete()) return false;
+            if (! $assignment->delete()) return false;
         }
 
 
@@ -763,7 +783,7 @@ class StreamModel extends Eloquent
      */
     public static function findOrFail($id, $columns = array('*'))
     {
-        if ( ! is_null($model = static::find($id, $columns))) return $model;
+        if (! is_null($model = static::find($id, $columns))) return $model;
 
         throw new Exception\StreamNotFoundException;
     }
