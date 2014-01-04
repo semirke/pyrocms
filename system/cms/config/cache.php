@@ -15,7 +15,7 @@ $cache = array(
 	|
 	*/
 
-	'driver' => 'file',
+	'driver' => 'array',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -102,7 +102,7 @@ $cache = array(
 		'cluster' => false,
 
 		'default' => array(
-			'host'     => '127.0.0.1',
+			'host'     => 'mnemonic.recgcu.0001.usw2.cache.amazonaws.com',
 			'port'     => 6379,
 			'database' => 0,
 		),
