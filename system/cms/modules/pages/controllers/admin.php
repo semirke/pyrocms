@@ -447,6 +447,10 @@ class Admin extends Admin_Controller {
 		{
 			$input = $this->input->post();
 
+            // Skip XSS on CSS / JS fields
+            $input['css'] = html_entity_decode($this->input->post('css', false));
+            $input['js'] = html_entity_decode($this->input->post('js', false));
+
 			// do they have permission to proceed?
 			if ($input['status'] == 'live')
 			{
