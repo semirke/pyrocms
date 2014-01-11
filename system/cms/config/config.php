@@ -287,7 +287,7 @@ $config['cookie_secure']	= false;
 | COOKIE data is encountered
 |
 */
-$config['global_xss_filtering'] = false;
+$config['global_xss_filtering'] = true;
 
 /*
 |--------------------------------------------------------------------------
