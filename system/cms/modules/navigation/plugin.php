@@ -162,7 +162,7 @@ class Plugin_Navigation extends Plugin
             // TODO Rethink group logic for sentry
             'user_groups' => isset($this->current_user->id) ? $this->current_user->groups->lists('id') : false,
             'front_end'  => true,
-            'is_secure'  => IS_SECURE,
+            'is_secure'  => Request::secure(),
         ));
 
         return $this->_build_links($links, $this->content());

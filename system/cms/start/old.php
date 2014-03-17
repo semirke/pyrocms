@@ -14,11 +14,8 @@
 define('PYRO_DEMO', (file_exists(FCPATH.'DEMO')));
 
 /*
- * Are we running as SSL or not? Laravel knows this, so we should kill this off.
+ * Base URL (keeps this crazy sh*t out of the config.php
  */
-define('IS_SECURE', (string) (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'));
-
-// Base URL (keeps this crazy sh*t out of the config.php
 if (isset($_SERVER['HTTP_HOST'])) {
     $base_url = (IS_SECURE ? 'https' : 'http')
         . '://' . $_SERVER['HTTP_HOST']
