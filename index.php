@@ -1,17 +1,17 @@
 <?php
 
 # If you have already installed then delete this
-if ( ! file_exists('system/cms/config/database.php')) {
-	
-	// Make sure we've not already tried this
-	if (strpos($_SERVER['REQUEST_URI'], 'installer/')) {
-		header('Status: 404');
-		exit('PyroCMS is missing system/cms/config/database.php and cannot find the installer folder. Does your server have permission to access these files?');
-	}
-	
-	// Otherwise go to installer
-	header('Location: '.rtrim($_SERVER['REQUEST_URI'], '/').'/installer/');
-	exit;
+if (! file_exists(__DIR__.'/system/cms/config/database.php')) {
+    
+    // Make sure we've not already tried this
+    if (strpos($_SERVER['REQUEST_URI'], 'installer/')) {
+        header('Status: 404');
+        exit('PyroCMS is missing system/cms/config/database.php and cannot find the installer folder. Does your server have permission to access these files?');
+    }
+    
+    // Otherwise go to installer
+    header('Location: '.rtrim($_SERVER['REQUEST_URI'], '/').'/installer/');
+    exit;
 }
 
 /*
@@ -37,6 +37,7 @@ define('PYRO_DEVELOPMENT', 'development');
 define('PYRO_STAGING', 'staging');
 define('PYRO_PRODUCTION', 'production');
 
+// @TODO #Laravel This is duplication of functionality. Make CI respect Laravel's env decision
 define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO_DEVELOPMENT));
 
 /*
@@ -48,13 +49,13 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
  * The development environment will show errors by default.
  */
 
-	if (ENVIRONMENT === PYRO_DEVELOPMENT or (isset($_SERVER['PYRO_DEBUG']) and $_SERVER['PYRO_DEBUG'] === 'on')) {
-		error_reporting(-1);
-		ini_set('display_errors', true);
-	} else {
-		ini_set('display_errors', false);
-	}
-	
+if (ENVIRONMENT === PYRO_DEVELOPMENT || (isset($_SERVER['PYRO_DEBUG']) && $_SERVER['PYRO_DEBUG'] === 'on')) {
+    error_reporting(-1);
+    ini_set('display_errors', true);
+} else {
+    ini_set('display_errors', false);
+}
+
 /*
 |---------------------------------------------------------------
 | DEFAULT INI SETTINGS
@@ -66,16 +67,11 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
 |
 */
 
-	// Let's hold Windows' hand and set a include_path in case it forgot
-	set_include_path(dirname(__FILE__));
+// Let's hold Windows' hand and set a include_path in case it forgot
+set_include_path(__DIR__);
 
-	// Some hosts (was it GoDaddy? complained without this
-	@ini_set('cgi.fix_pathinfo', 0);
-	
-	// PHP 5.3 will BITCH without this
-	if (ini_get('date.timezone') == '') {
-		date_default_timezone_set('UTC');
-	}
+// Some hosts (was it GoDaddy? complained without this
+@ini_set('cgi.fix_pathinfo', 0);
 
 /*
 |---------------------------------------------------------------
@@ -89,7 +85,7 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
 | NO TRAILING SLASH!
 |
 */
-	$system_path = 'system/codeigniter';
+    $system_path = 'system/codeigniter';
 
 /*
  *---------------------------------------------------------------
@@ -105,7 +101,7 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
  * NO TRAILING SLASH!
  *
  */
-	$application_folder = 'system/cms';
+    $application_folder = 'system/cms';
 
 /*
  *---------------------------------------------------------------
@@ -121,25 +117,7 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
  * NO TRAILING SLASH!
  *
  */
-	$addon_folder = 'addons';
-
-/*
- * -------------------------------------------------------------------
- *  CUSTOM CONFIG VALUES
- * -------------------------------------------------------------------
- *
- * The $assign_to_config array below will be passed dynamically to the
- * config class when initialized. This allows you to set custom config 
- * items or override any default config values found in the config.php file.  
- * This can be handy as it permits you to share one application between
- * multiple front controller files, with each file containing different 
- * config values.
- *
- * Un-comment the $assign_to_config array below to use this feature
- *
- */
-	// $assign_to_config['name_of_config_item'] = 'value of config item';
-
+    $addon_folder = 'addons';
 
 
 // --------------------------------------------------------------------
@@ -147,99 +125,115 @@ define('ENVIRONMENT', (isset($_SERVER['PYRO_ENV']) ? $_SERVER['PYRO_ENV'] : PYRO
 // --------------------------------------------------------------------
 
 
-
-
 /*
  * ---------------------------------------------------------------
  *  Resolve the system path for increased reliability
  * ---------------------------------------------------------------
  */
-	if (function_exists('realpath') AND @realpath($system_path) !== FALSE)
-	{
-		$system_path = realpath($system_path).'/';
-	}
-	
-	// ensure there's a trailing slash
-	$system_path = rtrim($system_path, '/').'/';
+if (function_exists('realpath') && @realpath($system_path) !== false) {
+    $system_path = realpath($system_path).'/';
+}
 
-	// Is the sytsem path correct?
-	if ( ! is_dir($system_path))
-	{
-		exit("Your system folder path does not appear to be set correctly. Please open the following file and correct this: ".pathinfo(__FILE__, PATHINFO_BASENAME));
-	}
+// ensure there's a trailing slash
+$system_path = rtrim($system_path, '/').'/';
+
+// Is the sytsem path correct?
+if (! is_dir($system_path)) {
+    exit("Your system folder path does not appear to be set correctly. Please open the following file and correct this: ".pathinfo(__FILE__, PATHINFO_BASENAME));
+}
 
 /*
  * -------------------------------------------------------------------
  *  Now that we know the path, set the main path constants
  * -------------------------------------------------------------------
- */		
-	// The name of THIS file
-	define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
-
- 	// Path to the system folder
-	define('BASEPATH', str_replace("\\", "/", $system_path));
-	
-	// The site slug: (example.com)
-	define('SITE_DOMAIN', $_SERVER['HTTP_HOST']);
-
- 	// This only allows you to change the name. ADDONPATH should still be used in the app
-	define('ADDON_FOLDER', $addon_folder.'/');
-	
-	// Path to the addon folder that is shared between sites
-	define('SHARED_ADDONPATH', 'addons/shared_addons/');
-	
-	// Path to the front controller (this file)
-	define('FCPATH', str_replace(SELF, '', __FILE__));
-	
-	// Name of the "system folder"
-	$parts = explode('/', trim(BASEPATH, '/'));
-	define('SYSDIR', end($parts));
-	unset($parts);
-
-	// The path to the "application" folder
-	define('APPPATH', $application_folder.'/');
-	
-	// Path to the views folder
-	define ('VIEWPATH', APPPATH.'views/' );
-	
-/*
- *---------------------------------------------------------------
- * DEMO
- *---------------------------------------------------------------
- *
- * Should PyroCMS run as a demo, meaning no destructive actions
- * can be taken such as removing admins or changing passwords?
- *
  */
+    // The name of THIS file
+    define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 
-    define('PYRO_DEMO', (file_exists(FCPATH.'DEMO')));
+    // Path to the system folder
+    define('BASEPATH', str_replace("\\", "/", $system_path));
+    
+    // The site slug: (example.com)
+    define('SITE_DOMAIN', $_SERVER['HTTP_HOST']);
+
+    // This only allows you to change the name. ADDONPATH should still be used in the app
+    define('ADDON_FOLDER', $addon_folder.'/');
+    
+    // Path to the addon folder that is shared between sites
+    define('SHARED_ADDONPATH', 'addons/shared_addons/');
+    
+    // Path to the front controller (this file)
+    define('FCPATH', str_replace(SELF, '', __FILE__));
+    
+    // Name of the "system folder"
+    $parts = explode('/', trim(BASEPATH, '/'));
+    define('SYSDIR', end($parts));
+    unset($parts);
+
+    // The path to the "application" folder
+    define('APPPATH', $application_folder.'/');
+    
+    // Path to the views folder
+    define('VIEWPATH', APPPATH.'views/');
 
 /*
- * --------------------------------------------------------------------
- * LOAD THE COMPOSER AUTOLOADER
- * --------------------------------------------------------------------
- *
- * ...and it will take care of our classes
- *
- */
-require_once FCPATH.'system/vendor/autoload.php';
-
-/*
- * --------------------------------------------------------------------------
- * SETUP PATCHWORK UTF-8 HANDLING
- * --------------------------------------------------------------------------
- *
- * The Patchwork library provides solid handling of UTF-8 strings as well
- * as provides replacements for all mb_* and iconv type functions that
- * are not available by default in PHP. We'll setup this stuff here.
- *
+|--------------------------------------------------------------------------
+| Get constants and global things
+|--------------------------------------------------------------------------
+|
+| This is gong to be an odd mixture of old CodeIgnter constants.php and new 
+| IoC things for Laravel. Eventually just the Laravel stuff will remain.
+|
 */
 
-Patchwork\Utf8\Bootup::initAll();
+require __DIR__.'/system/cms/start/global.php';
+
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader
+| for our application. We just need to utilize it! We'll require it
+| into the script here so that we do not have to worry about the
+| loading of any our classes "manually". Feels great to relax.
+|
+*/
+
+require __DIR__.'/system/bootstrap/autoload.php';
+
+/*
+|--------------------------------------------------------------------------
+| Turn On The Lights
+|--------------------------------------------------------------------------
+|
+| We need to illuminate PHP development, so let's turn on the lights.
+| This bootstraps the framework and gets it ready for use, then it
+| will load up this application so that we can run it and send
+| the responses back to the browser and delight these users.
+|
+*/
+
+$app = require_once __DIR__.'/system/bootstrap/start.php';
+
+/*
+|--------------------------------------------------------------------------
+| Run The Application
+|--------------------------------------------------------------------------
+|
+| Once we have the application, we can simply call the run method,
+| which will execute the request and send the response back to
+| the client's browser allowing them to enjoy the creative
+| and wonderful application we have whipped up for them.
+|
+*/
+
+// @TODO Laravel This will be the magic trigger to make routing and response happen
+// $app->run();
 
 /*
  * --------------------------------------------------------------------
- * LOAD THE BOOTSTRAP FILE
+ * LOAD THE OLD CODEIGNITER BOOTSTRAP FILE
  * --------------------------------------------------------------------
  *
  * And away we go...
