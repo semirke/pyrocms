@@ -7,3 +7,6 @@
  */
 
 
+App::instance('Markdown', function () {
+    return new Parsedown;
+});

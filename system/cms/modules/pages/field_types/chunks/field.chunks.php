@@ -126,15 +126,27 @@ class Field_chunks
         // If we have chunks, let's go ahead and add them.
         if ($chunks) {
             $i = 1;
+            
+            $markdown = App::make('Markdown');
+
             foreach ($chunks as $chunk) {
+
+                if ($chunk->type === 'markdown') {
+                    $parsed = $markdown->parse($chunk->body);
+                } else {
+                    $parsed = '';
+                }
+
+                $markdown = App::make('markdown');
+
                 $this->CI->page_chunk_m->insert(array(
                     'slug' 		=> preg_replace('/[^a-zA-Z0-9_-]/', '', $chunk->slug),
                     'class' 	=> preg_replace('/[^a-zA-Z0-9_-\s]/', '', $chunk->class),
                     'page_id' 	=> ci()->page_id,
                     'body' 		=> $chunk->body,
-                    'parsed'	=> ($chunk->type == 'markdown') ? parse_markdown($chunk->body) : '',
+                    'parsed'	=> $parsed,
                     'type' 		=> $chunk->type,
-                    'sort' 		=> $i++,
+                    'sort' 		=> ++$i,
                 ));
             }
         }

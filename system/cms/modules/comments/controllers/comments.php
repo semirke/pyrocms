@@ -138,7 +138,8 @@ class Comments extends Public_Controller
 
                     // If markdown is allowed we will parse the body for the email
                     if (Settings::get('comment_markdown')) {
-                        $comment->comment = parse_markdown($comment->comment);
+                        $markdown = App::make('Markdown');
+                        $comment->comment = $markdown->parse($comment->comment);
                     }
 
                     // Send the notification email

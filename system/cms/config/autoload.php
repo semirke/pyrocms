@@ -29,18 +29,6 @@
 
 /*
 | -------------------------------------------------------------------
-|  Auto-load Packges
-| -------------------------------------------------------------------
-| Prototype:
-|
-|  $autoload['packages'] = array(APPPATH.'third_party', '/usr/local/shared');
-|
-*/
-
-$autoload['packages'] = array();
-
-/*
-| -------------------------------------------------------------------
 |  Auto-load Libraries
 | -------------------------------------------------------------------
 | These are the classes located in the system/libraries folder
@@ -66,7 +54,7 @@ $autoload['libraries'] = array('asset', 'database', 'template', 'parser');
 
 $autoload['helper'] = array(
 	'date', 'debug', 'url', 'form', 'text', 'string', 'language', 'html', 'pagination', 
-    'array', 'gravatar', 'markdown', 'addons/module', 'users/user'
+    'array', 'gravatar', 'addons/module', 'users/user'
 );
 
 /*
@@ -98,17 +86,3 @@ $autoload['config'] = array('language');
 */
 
 $autoload['language'] = array('errors');
-
-/*
-| -------------------------------------------------------------------
-|  Auto-load Models
-| -------------------------------------------------------------------
-| Prototype:
-|
-|	$autoload['model'] = array('model1', 'model2');
-|
-*/
-
-$autoload['model'] = array();
-
-/* End of file autoload.php */

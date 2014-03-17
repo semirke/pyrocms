@@ -20,9 +20,9 @@
     "require": {
         "cartalyst/sentry": "2.1.*",
         "doctrine/dbal": "2.4.x",
-        "dflydev/markdown": "1.0.*",
-        "laravel/framework": "4.1.*",
+        "erusev/parsedown": "0.9.*",
         "ircmaxell/password-compat": "1.0.*",
+        "laravel/framework": "4.1.*",
         "loic-sharma/profiler": "1.1.*",
         "mccool/laravel-auto-presenter": "*",
         "nesbot/Carbon": "1.*",

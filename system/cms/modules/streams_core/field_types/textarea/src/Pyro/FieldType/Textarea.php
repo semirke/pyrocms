@@ -78,8 +78,8 @@ class Textarea extends FieldTypeAbstract
         // Not that we know what content is there, what format should we treat is as?
         switch ($content_type) {
             case 'md':
-                ci()->load->helper('markdown');
-                return parse_markdown($content);
+                $markdown = App::make('markdown');
+                return $markdown->parse($content);
 
             case 'html':
                 return $content;

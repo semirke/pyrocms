@@ -13,11 +13,14 @@
  */
 define('PYRO_DEMO', (file_exists(FCPATH.'DEMO')));
 
+
 /*
  * Base URL (keeps this crazy sh*t out of the config.php
  */
 if (isset($_SERVER['HTTP_HOST'])) {
-    $base_url = (IS_SECURE ? 'https' : 'http')
+    $is_secure = (bool) (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https');
+
+    $base_url = ($is_secure ? 'https' : 'http')
         . '://' . $_SERVER['HTTP_HOST']
         . str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
