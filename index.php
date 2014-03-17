@@ -178,15 +178,15 @@ if (! is_dir($system_path)) {
 
 /*
 |--------------------------------------------------------------------------
-| Get constants and global things
+| Get constants and old strange things
 |--------------------------------------------------------------------------
 |
 | This is gong to be an odd mixture of old CodeIgnter constants.php and new 
-| IoC things for Laravel. Eventually just the Laravel stuff will remain.
+| IoC things for Laravel.
 |
 */
 
-require __DIR__.'/system/cms/start/global.php';
+require __DIR__.'/system/cms/start/old.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -230,6 +230,7 @@ $app = require_once __DIR__.'/system/bootstrap/start.php';
 
 // @TODO Laravel This will be the magic trigger to make routing and response happen
 // $app->run();
+$app->boot();
 
 /*
  * --------------------------------------------------------------------
