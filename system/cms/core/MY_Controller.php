@@ -3,7 +3,6 @@
 require APPPATH . "libraries/MX/Controller.php";
 
 use Cartalyst\Sentry;
-use Composer\Autoload\ClassLoader;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Pyro\Cache\CacheManager;
 use Pyro\Module\Addons\ModuleManager;
@@ -51,7 +50,7 @@ class MY_Controller extends MX_Controller
         $this->benchmark->mark('my_controller_start');
 
         // For now, Set up this profiler because we can't pass Illuminate\Database queries to the Codeigniter profiler
-        // See https://github.com/loic-sharma/profiler        
+        // See https://github.com/loic-sharma/profiler
         $logger        = new \Profiler\Logger\Logger;
         ci()->profiler = new \Profiler\Profiler($logger);
 
@@ -70,24 +69,7 @@ class MY_Controller extends MX_Controller
         ci()->pdb = self::setupDatabase();
 
         // Lets PSR-0 up our modules
-        $loader = new ClassLoader;
-
-        // Register module manager for usage everywhere, its handy
-        $loader->add('Pyro\\Module\\Settings', realpath(APPPATH) . '/modules/settings/src/');
-        $loader->add('Pyro\\Module\\Addons', realpath(APPPATH) . '/modules/addons/src/');
-        $loader->add('Pyro\\Module\\Streams', realpath(APPPATH) . '/modules/streams_core/src/');
-        $loader->add('Pyro\\Module\\Users', realpath(APPPATH) . '/modules/users/src/');
-
-        // Map the streams model namespace to the site ref
-        $siteRef = str_replace(' ', '', ucwords(str_replace(array('-', '_'), ' ', SITE_REF)));
-
-        $loader->add(
-            'Pyro\\Module\\Streams\\Model',
-            realpath(APPPATH) . '/modules/streams_core/models/' . $siteRef . 'Site/'
-        );
-
-        // activate the autoloader
-        $loader->register();
+        $loader = App::make('ClassLoader');
 
         // Add the site specific theme folder
         $this->template->add_theme_location(ADDONPATH . 'themes/');
@@ -118,7 +100,7 @@ class MY_Controller extends MX_Controller
 
         // We can't have a blank language. If there happens
         // to be a blank language, let's default to English.
-        if (!$site_lang) {
+        if (! $site_lang) {
             $site_lang = 'en';
         }
 
@@ -173,9 +155,6 @@ class MY_Controller extends MX_Controller
 
         ci()->widgetManager = $this->widgetManager = new WidgetManager();
 
-        // activate the autoloader
-        $loader->register();
-
         // now that we have a list of enabled modules
         $this->load->library('events');
 
@@ -185,6 +164,7 @@ class MY_Controller extends MX_Controller
         // load all modules (the Events library uses them all) and make their details widely available
         $enabled_modules = $this->moduleManager->getAllEnabled();
 
+        // Loop through modules and register them
         foreach ($enabled_modules as $module) {
             FieldTypeManager::registerFolderFieldTypes($module['path'] . '/field_types/', $module['field_types']);
 
@@ -199,6 +179,7 @@ class MY_Controller extends MX_Controller
                 continue;
             }
         }
+        $loader->register();
 
         if ($this->module) {
             // If this a disabled module then show a 404
