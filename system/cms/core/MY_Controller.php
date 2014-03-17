@@ -171,7 +171,7 @@ class MY_Controller extends MX_Controller
             // register classes with namespaces
             $loader->add('Pyro\\Module\\' . ucfirst($module['slug']), $module['path'] . '/src/');
 
-            // Also, save this module to... everywhere if its the current one 
+            // Also, save this module to... everywhere if its the current one
             if ($module['slug'] === $this->module) {
                 // Set meta data for the module to be accessible system wide
                 $this->template->module_details = ci()->module_details = $this->module_details = $module;
@@ -309,11 +309,6 @@ class MY_Controller extends MX_Controller
 
     public function setupDatabase()
     {
-        // @TODO Get rid of this for 3.0
-        if (!class_exists('CI_Model')) {
-            load_class('Model', 'core');
-        }
-
         $prefix = SITE_REF . '_';
 
         // By changing the prefix we are essentially "namespacing" each site
