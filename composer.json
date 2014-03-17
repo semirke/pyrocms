@@ -19,7 +19,6 @@
 
     "require": {
         "cartalyst/sentry": "2.1.*",
-        "doctrine/dbal": "2.4.x",
         "erusev/parsedown": "0.9.*",
         "ircmaxell/password-compat": "1.0.*",
         "laravel/framework": "4.1.*",
