@@ -20,6 +20,7 @@
     "require": {
         "cartalyst/sentry": "2.1.*",
         "erusev/parsedown": "0.9.*",
+        "guzzlehttp/guzzle": "4.*",
         "ircmaxell/password-compat": "1.0.*",
         "laravel/framework": "4.1.*",
         "loic-sharma/profiler": "1.1.*",

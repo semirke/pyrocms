@@ -56,8 +56,6 @@ class Files
 
         set_exception_handler(array($this, 'exceptionHandler'));
         set_error_handler(array($this, 'errorHandler'));
-
-        ci()->load->spark('cloudmanic-storage/1.0.4');
     }
 
     // ------------------------------------------------------------------------

@@ -218,18 +218,14 @@ $app = require_once __DIR__.'/system/bootstrap/start.php';
 
 /*
 |--------------------------------------------------------------------------
-| Run The Application
+| Boot Laravel
 |--------------------------------------------------------------------------
 |
-| Once we have the application, we can simply call the run method,
-| which will execute the request and send the response back to
-| the client's browser allowing them to enjoy the creative
-| and wonderful application we have whipped up for them.
+| Avoid running Laravel entirely to skip their request -> response logic, 
+| just boot their system to get caching, IoC, validation, etc all set.
 |
 */
 
-// @TODO Laravel This will be the magic trigger to make routing and response happen
-// $app->run();
 $app->boot();
 
 /*

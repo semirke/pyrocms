@@ -90,7 +90,10 @@ class Ajax extends CI_Controller
         $this->installer_lib->mysql_acceptable('client');
         $this->installer_lib->gd_acceptable();
 
-        $data = array(
+        $url = 'https://www.pyrocms.com/statistics/add';
+        
+        $client = new GuzzleHttp\Client();
+        $client->post($url, array(
             'version' => CMS_VERSION,
             'php_version' => phpversion(),
             'webserver_hash' => md5($this->session->userdata('http_server').$this->input->server('SERVER_NAME').$this->input->server('SERVER_ADDR').$this->input->server('SERVER_SIGNATURE')),
@@ -100,12 +103,7 @@ class Ajax extends CI_Controller
             'gd_version' => $this->installer_lib->gd_version,
             'zlib_version' => $this->installer_lib->zlib_available(),
             'curl' => $this->installer_lib->curl_available(),
-        );
-
-        include '../system/sparks/curl/1.2.1/libraries/Curl.php';
-        $url = 'https://www.pyrocms.com/statistics/add';
-        $curl = new Curl;
-        $curl->simple_post($url, $data);
+        ));
     }
 
     /**
@@ -116,7 +114,7 @@ class Ajax extends CI_Controller
     public function check_rewrite()
     {
         // if it doesn't exist then warn them at least
-        if ( ! function_exists('apache_get_modules')) {
+        if (! function_exists('apache_get_modules')) {
             return print(lang('rewrite_fail'));
         }
 
@@ -126,5 +124,4 @@ class Ajax extends CI_Controller
 
         return print(lang('mod_rewrite'));
     }
-
 }
