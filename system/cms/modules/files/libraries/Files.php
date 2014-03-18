@@ -531,12 +531,8 @@ class Files
         } elseif ($file->folder->location and $new_location === 'local') {
             // pull it from the cloud to our filesystem
             ci()->load->helper('file');
-            ci()->load->spark('curl/1.2.1');
 
-            // download the file... dum de dum
-            $curl_result = ci()->curl->simple_get($file->path);
-
-            if ($curl_result) {
+            if (is_readable($file->path)) {
                 // if they were helpful enough to provide an extension then remove it
                 $file_slug = self::createSlug(str_replace($file->extension, '', $new_name));
                 $filename = $file_slug.$file->extension;
@@ -545,11 +541,11 @@ class Files
                 while (file_exists(self::$path.$filename)) {
                     // Example: test-image2.jpg
                     $filename = $file_slug.$i.$file->extension;
-                    $i++;
+                    ++$i;
                 }
 
-                // ...now save it
-                write_file(self::$path.$filename, $curl_result, 'wb');
+                // copy it it
+                copy($file->path, self::$path.$filename);
 
                 $data = array('id' => $file_id,
                     'name' => $new_name,
