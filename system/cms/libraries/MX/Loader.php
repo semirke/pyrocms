@@ -184,40 +184,10 @@ class MX_Loader extends CI_Loader
 	/** Load a module model **/
 	public function model($model, $object_name = null, $connect = false)
 	{
-		if (is_array($model)) return $this->models($model);
-
-		$model_pieces = explode('/', $model);
-		($_alias = $object_name) OR $_alias = end($model_pieces);
-
-		if (in_array($_alias, $this->_ci_models, true))
-			return CI::$APP->$_alias;
-
-		/* check module */
-		list($path, $_model) = Modules::find(strtolower($model), $this->_module, 'models/');
-
-		if ($path == false) {
-
-			/* check application & packages */
-			parent::model($model, $object_name);
-
-		} else {
-
-			class_exists('CI_Model', false) OR load_class('Model', 'core');
-
-			if ($connect !== false and ! class_exists('CI_DB', false)) {
-				if ($connect === true) $connect = '';
-				$this->database($connect, false, true);
-			}
-
-			Modules::load_file($_model, $path);
-
-			$model = ucfirst($_model);
-			CI::$APP->$_alias = new $model();
-
-			$this->_ci_models[] = $_alias;
-		}
-
-		return CI::$APP->$_alias;
+	    show_error(
+            'Old CodeIgnitr-style model logic was deprecated in v2.3 and has been removed in v3.0,'
+            . ' in favor of using PSR-0 autoloaded code. Remove all references to $this->load->model()'
+        );
 	}
 
 	/** Load an array of models **/

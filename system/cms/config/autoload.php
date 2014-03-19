@@ -12,19 +12,6 @@
 | you globally define which systems you would like loaded with every
 | request.
 |
-| -------------------------------------------------------------------
-| Instructions
-| -------------------------------------------------------------------
-|
-| These are the things you can load automatically:
-|
-| 1. Packages
-| 2. Libraries
-| 3. Helper files
-| 4. Custom config files
-| 5. Language files
-| 6. Models
-|
 */
 
 /*
@@ -37,8 +24,6 @@
 | Prototype:
 |
 |	$autoload['libraries'] = array('database', 'session', 'xmlrpc');
-|
-|	Note: Quick Cache is loaded by MY_Controller to allow the site_ref to be set
 */
 
 $autoload['libraries'] = array('asset', 'database', 'template', 'parser');
