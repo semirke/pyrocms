@@ -8,22 +8,28 @@ use Pyro\Module\Files\Model\File;
  *
  * Create a list of files
  *
- * @author		Marcos Coelho
- * @author		PyroCMS Dev Team
- * @package		PyroCMS\Core\Modules\Files\Plugins
+ * @author      Marcos Coelho
+ * @author      PyroCMS Dev Team
+ * @package     PyroCMS\Core\Modules\Files\Plugins
  */
 class Plugin_Files extends Plugin
 {
-
     public $version = '1.0.0';
+
     public $name = array(
         'en' => 'Files',
             'fa' => 'فایل ها',
     );
+
     public $description = array(
         'en' => 'List files in specified folders and output images with cropping.',
              'fa' => 'لیست فایل های موجود در پوشه ی مشخص شده و خروجی تصاویر',
     );
+
+    /**
+     * @var string Optional CDN domain to use as a "pull zone" for file URLs
+     */
+    protected $cdn_domain;
 
     /**
      * Returns a PluginDoc array that PyroCMS uses
@@ -293,6 +299,8 @@ class Plugin_Files extends Plugin
     public function __construct()
     {
         $this->load->library('files/files');
+
+        $this->cdn_domain = Settings::get('cdn_domain');
     }
 
     /**
@@ -303,14 +311,14 @@ class Plugin_Files extends Plugin
      * Usage:
      *
      * {{ files:listing folder="home-slider" type="i" fetch="subfolder|root" }}
-     * 	// your html logic
+     *  // your html logic
      * {{ /files:listing }}
      *
      *
      * Alternate Usage:
      *
      * {{ files:listing folder="home-slider" tagged="sunset|hiking|mountain" }}
-     * 	// your html logic
+     *  // your html logic
      * {{ /files:listing }}
      *
      * The tags that are available to use from this method are listed below
@@ -329,7 +337,7 @@ class Plugin_Files extends Plugin
      * {{ filesize }}
      * {{ date_added }}
      *
-     * @return	array
+     * @return  array
      */
     public function listing()
     {
@@ -361,7 +369,7 @@ class Plugin_Files extends Plugin
      * * Usage:
      *
      * {{ files:file id="9517fd0bf8faa65" }}
-     * 	// your html logic
+     *  // your html logic
      * {{ /files:file }}
      *
      */
@@ -380,13 +388,13 @@ class Plugin_Files extends Plugin
      * Usage:
      *
      * {{ files:folders folder="home-slider" include_files="no|yes" }}
-     * 	{{ folders }}
-     * 		// Your html logic
-     * 	{{ /folders }}
+     *  {{ folders }}
+     *      // Your html logic
+     *  {{ /folders }}
      *
-     * 	{{ files }}
-     * 		// your html logic
-     * 	{{ /files }}
+     *  {{ files }}
+     *      // your html logic
+     *  {{ /files }}
      * {{ /files:folders }}
      *
      * The tags that are available to use from this method are listed below
@@ -395,7 +403,7 @@ class Plugin_Files extends Plugin
      * {{ files }}
      * {{ parent_id }}
      *
-     * @return	array
+     * @return  array
      */
     public function folders()
     {
@@ -417,7 +425,7 @@ class Plugin_Files extends Plugin
             ->get_all();
 
         $files = ($include_files == 'yes')
-            ? ci()->file_m->where('folder_id', $parent)->order_by('sort')->get_all()
+            ? File::findByFolderIdBySort($parent)
             : false;
 
         // let's be nice and add a date in that's formatted like the rest of the CMS
@@ -425,7 +433,7 @@ class Plugin_Files extends Plugin
             foreach ($folders as &$folder) {
                 $folder->formatted_date = format_date($folder->date_added);
 
-                $folder->file_count = ci()->file_m->count_by('folder_id', $folder->id);
+                $folder->file_count = File::countByFolderId($folder->id);
             }
             $data['folders'] = $folders;
         }
@@ -467,9 +475,11 @@ class Plugin_Files extends Plugin
         }
 
         // file not found
-        if ( ! $file or ($type && $file->type !== $type)) {
+        if (! $file or ($type && $file->type !== $type)) {
             return '';
-        } elseif ( ! $return && $this->content()) { // return file fields array
+
+        // return file fields array
+        } elseif (! $return && $this->content()) {
             return (array) $file;
         }
 
@@ -481,7 +491,7 @@ class Plugin_Files extends Plugin
                 list($width, $height) = explode('/', strtr($size, 'x', '/'));
             } else {
                 $width  = $this->attribute('width', '');
-                $height	= $this->attribute('height', '');
+                $height = $this->attribute('height', '');
             }
 
             is_numeric($width) or $width = 'auto';
@@ -515,10 +525,16 @@ class Plugin_Files extends Plugin
                 return $file->path;
             }
 
-            return ($return === 'url') ? site_url($uri) : BASE_URI . $uri;
+            // If they want a URL, give them a URL, and maybe shove a CDN domain on it
+            if ($return === 'url') {
+                return $this->prependDomain($uri);
+            }
+
+            // Didnt specify a URL, so its a path, which is going to be CDN-less sadly
+            return BASE_URI.$uri;
         }
 
-        $attributes	= $this->attributes();
+        $attributes = $this->attributes();
 
         foreach (array('base', 'size', 'id', 'title', 'type', 'mode', 'width', 'height') as $key) {
             if (isset($attributes[$key]) && ($type !== 'i' or ! in_array($key, array('width', 'height')))) {
@@ -535,7 +551,9 @@ class Plugin_Files extends Plugin
         $base = $this->attribute('base', 'url');
 
         // alt tag is named differently in db to prevent confusion with "alternative", so need to do check for it manually
-        $attributes['alt'] = isset($attributes['alt']) ? $attributes['alt'] : $file->alt_attribute;
+        if (!isset($attributes['alt'])) {
+            $attributes['alt'] =  $file->alt_attribute;
+        }
 
         // return an image tag html
         if ($type === 'i') {
@@ -554,7 +572,7 @@ class Plugin_Files extends Plugin
         // return an file anchor tag html
         $title = $this->attribute('title');
 
-        return $this->{'_build_tag_location_' . $base}($type, $uri, compact('title', 'attributes'));
+        return $this->buildHtmlTag($type, $uri, compact('title', 'attributes'));
     }
 
     public function image()
@@ -588,51 +606,78 @@ class Plugin_Files extends Plugin
 
         $exists = (bool) (isset($this->_files[$id]) ? true : !(File::find($id)->isEmpty()));
 
-        return $exists && $this->content() ?: $exists;
+        return ($exists && $this->content()) ?: $exists;
     }
 
     public function folder_exists()
     {
         $exists = (bool) !(Folder::findBySlug($this->attribute('slug'))->isEmpty());
 
-        return $exists && $this->content() ?: $exists;
+        return ($exists && $this->content()) ?: $exists;
     }
 
-    private function _build_tag_location_url($type = '', $uri = '', $extras = array())
+    /**
+     * Prepend Domain
+     *
+     * The user will probably want to use the domain the file is on, OR a CDN.
+     * CDN support is basic and assumes it is a "Pull Zone". It will also allow
+     * content expiration whenever the CDN sees fit to expire it. Pyro wont do 
+     * that for the user.
+     *
+     * @param string $uri The path string (URI) which needs a domain shoved on 
+     *   on the front 
+     *
+     * @return string
+     */
+    protected function prependDomain($uri)
     {
-        extract($extras);
+        $urlString = site_url($uri);
+
+        // No CDN, so just shove this out immediately
+        if (! $this->cdn_domain) {
+            return $urlString;
+        }
+        
+        // Strip the URL apart so we can manipulate it
+        $urlParts = parse_url($urlString);
+
+        // We have to replace the domain with a CDN domain
+        $urlParts['host'] = $this->cdn_domain;
+
+        // Make a new URL string
+        return http_build_url($urlParts);
+    }
+
+    /**
+     * Build HTML Tag
+     *
+     * Take a URL and a type ('i' or other) and get a HTML tag as a response.
+     *
+     * @param string $type The type of file we are working with: 'i' is an image, 
+     *   anything else is going to be linked to directly
+     * @param string $url The location (uri, local URL, CDN URL or third-party URL) of 
+     *   a file
+     * @param array $extras The location (uri, local URL, CDN URL or third-party URL) of 
+     *   a file
+     *
+     * @return string
+     */
+    protected function buildHtmlTag($type, $url, $extras = array())
+    {
+        $attributes = isset($extras['attributes']) ? $extras['attributes'] : array();
 
         if ($type === 'i') {
-            $attributes['src'] = $uri;
+            $attributes['src'] = $url;
+
+            $index_page = isset($extras['index_page']) ? $extras['index_page'] : null;
 
             return img($attributes, $index_page);
         }
 
-        return anchor($uri, $title, $attributes);
-    }
+        // Just basics then, as urls might have links
+        $title = isset($extras['title']) ? $extras['title'] : null;
 
-    private function _build_tag_location_path($type = '', $uri = '', $extras = array())
-    {
-        extract($extras);
-
-        // unset config base_url
-        $base_url = $this->config->item('base_url');
-        $this->config->set_item('base_url', '');
-
-        // generate tag
-        if ($type === 'i') {
-            $attributes['src'] = $uri;
-
-            $tag = img($attributes, $index_page);
-        } else {
-            $tag = anchor($uri, $title, $attributes);
-        }
-
-        // set config base_url
-        $this->config->set_item('base_url', $base_url);
-
-        return $tag;
+        // Link to it so the browser can deal with what is going on
+        return anchor($url, $title, $attributes);
     }
 }
-
-/* End of file plugin.php */

@@ -219,11 +219,16 @@ class Files_front extends Public_Controller
     {
         $file = File::find($id);
 
+        if (! $file) {
+            set_status_header(404);
+            return;
+        }
+
         // it is a cloud file, we will return the thumbnail made when it was uploaded
-        if ($file and $file->folder->location !== 'local') {
+        if ($file->folder->location !== 'local') {
             $thumb_filename = config_item('cache_dir').'/cloud_cache/'.$file->filename;
 
-            if ( ! file_exists($thumb_filename)) {
+            if (! file_exists($thumb_filename)) {
                 $thumb_filename = APPPATH.'modules/files/img/no-image.jpg';
             }
 
@@ -234,14 +239,13 @@ class Files_front extends Public_Controller
                 exit();
             }
 
-            header('Content-type: ' . $file->mimetype);
+            header('Content-Type: ' . $file->mimetype);
             header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($thumb_filename)) . ' GMT');
             readfile($thumb_filename);
-        } elseif ($file) {
-            // it's a local file, output a thumbnail like we normally do
-            return $this->thumb($id, $width, $height, $mode);
+            exit;
         }
+
+        // it's a local file, output a thumbnail like we normally do
+        return $this->thumb($id, $width, $height, $mode);
     }
 }
-
-/* End of file files.php */

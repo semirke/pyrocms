@@ -67,8 +67,19 @@ class File extends Eloquent
      */
     public static function findByFolderIdBySort($parent_id = 0)
     {
-        return static::where('folder_id','=',$parent_id)
+        return static::where('folder_id', '=', $parent_id)
             ->orderBy('sort')->get();
+    }
+
+    /**
+     * Count files by folder_id
+     *
+     * @param  int    $folder_id The folder_id of the files to count
+     * @return int
+     */
+    public static function countByFolderId($folder_id)
+    {
+        return static::where('folder_id', '=', $folder_id)->count();
     }
 
     /**
