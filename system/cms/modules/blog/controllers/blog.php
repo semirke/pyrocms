@@ -4,6 +4,11 @@
  *
  * @author  PyroCMS Dev Team
  * @package PyroCMS\Core\Modules\Blog\Controllers
+ *
+ * Modified for MySEO module, modifications only in _single_view() method
+ *
+ * file location: system/cms/modules/blog/controllers/blog.php
+ *
  */
 class Blog extends Public_Controller
 {
@@ -56,7 +61,7 @@ class Blog extends Public_Controller
 				AND entry_id=".$this->db->protect_identifiers('blog.id', true).") as `comment_count`";
 
 		// Get the latest blog posts
-		$posts = $this->streams->entries->get_entries(array(
+		$params = array(
 			'stream'		=> 'blog',
 			'namespace'		=> 'blogs',
 			'limit'			=> Settings::get('records_per_page'),
@@ -64,7 +69,8 @@ class Blog extends Public_Controller
 			'paginate'		=> 'yes',
 			'pag_base'		=> site_url('blog/page'),
 			'pag_segment'   => 3
-		));
+		);
+		$posts = $this->streams->entries->get_entries($params);
 
 		// Process posts
 		foreach ($posts['entries'] as &$post)
@@ -334,15 +340,20 @@ class Blog extends Public_Controller
 		$keywords = Keywords::get($post['keywords']);
 		$formatted_keywords = array();
 		$keywords_arr = array();
+		$keywords_txt="";
 
 		foreach ($keywords as $key)
 		{
 			$formatted_keywords[] 	= array('keyword' => $key->name);
 			$keywords_arr[] 		= $key->name;
+			$keywords_txt .=  $key->name . ",";
 
 		}
+
+		$keywords_txt = substr($keywords_txt, 0, strlen($keywords_txt)-1);
 		$post['keywords'] = $formatted_keywords;
 		$post['keywords_arr'] = $keywords_arr;
+		$post['keywords_txt'] = $keywords_txt;
 
 		// Full URL for convenience.
 		$post['url'] = site_url('blog/'.date('Y/m', $post['created_on']).'/'.$post['slug']);
@@ -455,6 +466,19 @@ class Blog extends Public_Controller
 			));
 		}
 
+        // start of MySEO modification
+
+        // i reccommend you touche only the mod part, not overwrite the file!
+
+        // file location: system/cms/modules/blog/controllers/blog.php
+
+        // method _single_view()
+
+        // comment out templete view building and replace with everything below it
+
+        // tested with pyrocms 2.2.1
+
+        /*
 		$this->template
 			->title($post['title'], lang('blog:blog_title'))
 			->set_metadata('og:type', 'article', 'og')
@@ -470,5 +494,59 @@ class Blog extends Public_Controller
 			->set_stream($this->stream->stream_slug, $this->stream->stream_namespace)
 			->set('post', array($post))
 			->build('view');
+        */
+
+        $myseo_meta = $this->db->where('post_id', $post['id'])->get('myseo_posts_meta')->row();
+
+        // case no meta was found
+        if (empty($myseo_meta))
+        {
+            $myseo_meta = new stdClass();
+
+            $myseo_meta->title = '';
+            $myseo_meta->description = '';
+            $myseo_meta->keywords = '';
+            $myseo_meta->no_index = '';
+            $myseo_meta->no_follow = '';
+        }
+
+        // get actual keywords
+        $myseo_meta->keywords = Keywords::get_string($myseo_meta->keywords);
+
+        if ($myseo_meta->title)
+        {
+            $this->template->title($myseo_meta->title);
+        }
+        else
+        {
+            $this->template->title($post['title'], lang('blog:blog_title'));
+        }
+
+        $description = ($myseo_meta->description) ? $myseo_meta->description : $post['preview'];
+
+        $keywords = ($myseo_meta->keywords) ? $myseo_meta->keywords : implode(', ', $post['keywords_arr']);
+
+        $robots = array(
+            'index' => ($myseo_meta->no_index) ? 'noindex' : 'index',
+            'follow' => ($myseo_meta->no_follow) ? 'nofollow' : 'follow'
+        );
+
+        $robots = implode(',', $robots);
+
+        $this->template
+            ->set_metadata('og:type', 'article', 'og')
+            ->set_metadata('og:url', current_url(), 'og')
+            ->set_metadata('og:title', $post['title'], 'og')
+            ->set_metadata('og:site_name', Settings::get('site_name'), 'og')
+            ->set_metadata('og:description', $post['preview'], 'og')
+            ->set_metadata('article:published_time', date(DATE_ISO8601, $post['created_on']), 'og')
+            ->set_metadata('article:modified_time', date(DATE_ISO8601, $post['updated_on']), 'og')
+            ->set_metadata('description', $description)
+            ->set_metadata('keywords', $keywords)
+            ->set_metadata('robots', $robots)
+            ->set_breadcrumb($post['title'])
+            ->set_stream($this->stream->stream_slug, $this->stream->stream_namespace)
+            ->set('post', array($post))
+            ->build('view');
 	}
 }
